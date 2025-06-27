@@ -7,11 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { toast } from "sonner";
-import { getContract, getBalance } from "@/utils/ether";
-import { useAccount } from "wagmi";
+import { getContract, getBalance, debugBalance } from "@/utils/ethers";
+import { useAccount, useChainId } from "wagmi";
 
 export default function TokenInteraction() {
   const { address: account } = useAccount();
+  const chainId = useChainId();
   const [balance, setBalance] = useState<string>("0");
   const [toAddress, setToAddress] = useState("");
   const [amount, setAmount] = useState("");
@@ -20,24 +21,43 @@ export default function TokenInteraction() {
 
   useEffect(() => {
     const fetchBalance = async () => {
-      if (account) {
-        try {
-          setIsLoading(true);
-          const balance = await getBalance(account);
-          setBalance(balance);
-        } catch (error: any) {
-          toast.error(`Failed to fetch balance: ${error.message}`);
-        } finally {
-          setIsLoading(false);
+      if (!account) {
+        setBalance("0");
+        toast.info("Connect your wallet to view balance");
+        return;
+      }
+      if (chainId !== 11155111) {
+        toast.error("Please switch to Sepolia testnet");
+        setBalance("0");
+        return;
+      }
+      try {
+        setIsLoading(true);
+        await debugBalance(account); // Debug raw call
+        const balance = await getBalance(account);
+        setBalance(balance);
+        if (balance === "0") {
+          toast.warning(
+            "No SIMP tokens found in your wallet. Transfer tokens to this address."
+          );
         }
+      } catch (error: any) {
+        toast.error(`Failed to fetch balance: ${error.message}`);
+        setBalance("0");
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchBalance();
-  }, [account]);
+  }, [account, chainId]);
 
   const handleTransfer = async () => {
     if (!account || !toAddress || !amount) {
       toast.error("Please fill all fields and connect wallet");
+      return;
+    }
+    if (chainId !== 11155111) {
+      toast.error("Please switch to Sepolia testnet");
       return;
     }
     setIsLoading(true);
@@ -70,6 +90,10 @@ export default function TokenInteraction() {
       toast.error("Please enter an amount to burn and connect wallet");
       return;
     }
+    if (chainId !== 11155111) {
+      toast.error("Please switch to Sepolia testnet");
+      return;
+    }
     setIsLoading(true);
     try {
       const contract = await getContract();
@@ -88,7 +112,7 @@ export default function TokenInteraction() {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-white shadow-md">
+      <Card className="bg-card text-card-foreground shadow-md">
         <CardHeader>
           <CardTitle>Wallet</CardTitle>
         </CardHeader>
@@ -99,15 +123,18 @@ export default function TokenInteraction() {
             chainStatus="icon"
             label="Connect Wallet"
           />
-          {account && (
-            <p className="text-sm text-gray-600">
-              Balance: <span className="font-semibold">{balance} SIMP</span>
+          {account && chainId === 11155111 && (
+            <p className="text-sm text-muted-foreground">
+              Balance:{" "}
+              <span className="font-semibold">
+                {isLoading ? "Loading..." : `${balance} SIMP`}
+              </span>
             </p>
           )}
         </CardContent>
       </Card>
 
-      <Card className="bg-white shadow-md">
+      <Card className="bg-card text-card-foreground shadow-md">
         <CardHeader>
           <CardTitle>Transfer Tokens</CardTitle>
         </CardHeader>
@@ -117,26 +144,26 @@ export default function TokenInteraction() {
             placeholder="Recipient Address (0x...)"
             value={toAddress}
             onChange={(e) => setToAddress(e.target.value)}
-            disabled={isLoading || !account}
+            disabled={isLoading || !account || chainId !== 11155111}
           />
           <Input
             type="number"
             placeholder="Amount (SIMP)"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            disabled={isLoading || !account}
+            disabled={isLoading || !account || chainId !== 11155111}
           />
           <Button
             onClick={handleTransfer}
-            disabled={isLoading || !account}
-            className="w-full hover:cursor-pointer"
+            disabled={isLoading || !account || chainId !== 11155111}
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
           >
             {isLoading ? "Processing..." : "Transfer"}
           </Button>
         </CardContent>
       </Card>
 
-      <Card className="bg-white shadow-md">
+      <Card className="bg-card text-card-foreground shadow-md">
         <CardHeader>
           <CardTitle>Burn Tokens</CardTitle>
         </CardHeader>
@@ -146,12 +173,12 @@ export default function TokenInteraction() {
             placeholder="Amount to Burn (SIMP)"
             value={burnAmount}
             onChange={(e) => setBurnAmount(e.target.value)}
-            disabled={isLoading || !account}
+            disabled={isLoading || !account || chainId !== 11155111}
           />
           <Button
             onClick={handleBurn}
-            disabled={isLoading || !account}
-            className="w-full hover:cursor-pointer"
+            disabled={isLoading || !account || chainId !== 11155111}
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
           >
             {isLoading ? "Processing..." : "Burn"}
           </Button>
