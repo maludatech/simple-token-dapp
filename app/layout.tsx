@@ -10,9 +10,6 @@ export const metadata: Metadata = {
   title: "Simple Token DApp",
   description:
     "A decentralized application to interact with the Simple Token (SIMP) on Sepolia",
-  icons: {
-    icon: "/favicon.ico",
-  },
 };
 
 export default function RootLayout({
@@ -25,7 +22,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <Web3Provider>
           {children}
-          <Toaster />
+          <Toaster richColors />
         </Web3Provider>
       </body>
     </html>

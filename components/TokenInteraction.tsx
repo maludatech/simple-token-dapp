@@ -5,11 +5,13 @@ import { ethers } from "ethers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { toast } from "sonner";
-import { getContract, connectWallet, getBalance } from "@/utils/ether";
+import { getContract, getBalance, getConnectedAccount } from "@/utils/ether";
+import { useAccount } from "wagmi";
 
 export default function TokenInteraction() {
-  const [account, setAccount] = useState<string | null>(null);
+  const { address: account } = useAccount();
   const [balance, setBalance] = useState<string>("0");
   const [toAddress, setToAddress] = useState("");
   const [amount, setAmount] = useState("");
@@ -20,31 +22,22 @@ export default function TokenInteraction() {
     const fetchBalance = async () => {
       if (account) {
         try {
+          setIsLoading(true);
           const balance = await getBalance(account);
           setBalance(balance);
         } catch (error: any) {
           toast.error(`Failed to fetch balance: ${error.message}`);
+        } finally {
+          setIsLoading(false);
         }
       }
     };
     fetchBalance();
   }, [account]);
 
-  const handleConnectWallet = async () => {
-    try {
-      const account = await connectWallet();
-      setAccount(account);
-      toast.success(
-        `Wallet connected: ${account?.slice(0, 6)}...${account?.slice(-4)}`
-      );
-    } catch (error: any) {
-      toast.error(`Error connecting wallet: ${error.message}`);
-    }
-  };
-
   const handleTransfer = async () => {
     if (!account || !toAddress || !amount) {
-      toast.error("Please fill all fields");
+      toast.error("Please fill all fields and connect wallet");
       return;
     }
     setIsLoading(true);
@@ -57,7 +50,7 @@ export default function TokenInteraction() {
       await tx.wait();
       const newBalance = await getBalance(account);
       setBalance(newBalance);
-      toast.error(
+      toast.success(
         `Transferred ${amount} SIMP to ${toAddress.slice(
           0,
           6
@@ -74,7 +67,7 @@ export default function TokenInteraction() {
 
   const handleBurn = async () => {
     if (!account || !burnAmount) {
-      toast.error("Please enter an amount to burn");
+      toast.error("Please enter an amount to burn and connect wallet");
       return;
     }
     setIsLoading(true);
@@ -84,7 +77,7 @@ export default function TokenInteraction() {
       await tx.wait();
       const newBalance = await getBalance(account);
       setBalance(newBalance);
-      toast.error(`Burned ${burnAmount} SIMP`);
+      toast.success(`Burned ${burnAmount} SIMP`);
       setBurnAmount("");
     } catch (error: any) {
       toast.error(`Burn failed: ${error.message}`);
@@ -95,20 +88,17 @@ export default function TokenInteraction() {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="bg-white shadow-md">
         <CardHeader>
           <CardTitle>Wallet</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button
-            onClick={handleConnectWallet}
-            disabled={isLoading}
-            className="w-full hover:cursor-pointer"
-          >
-            {account
-              ? `Connected: ${account.slice(0, 6)}...${account.slice(-4)}`
-              : "Connect Wallet"}
-          </Button>
+          <ConnectButton
+            showBalance={false}
+            accountStatus="address"
+            chainStatus="icon"
+            label="Connect Wallet"
+          />
           {account && (
             <p className="text-sm text-gray-600">
               Balance: <span className="font-semibold">{balance} SIMP</span>
@@ -117,7 +107,7 @@ export default function TokenInteraction() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="bg-white shadow-md">
         <CardHeader>
           <CardTitle>Transfer Tokens</CardTitle>
         </CardHeader>
@@ -127,18 +117,18 @@ export default function TokenInteraction() {
             placeholder="Recipient Address (0x...)"
             value={toAddress}
             onChange={(e) => setToAddress(e.target.value)}
-            disabled={isLoading}
+            disabled={isLoading || !account}
           />
           <Input
             type="number"
             placeholder="Amount (SIMP)"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            disabled={isLoading}
+            disabled={isLoading || !account}
           />
           <Button
             onClick={handleTransfer}
-            disabled={isLoading}
+            disabled={isLoading || !account}
             className="w-full hover:cursor-pointer"
           >
             {isLoading ? "Processing..." : "Transfer"}
@@ -146,7 +136,7 @@ export default function TokenInteraction() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="bg-white shadow-md">
         <CardHeader>
           <CardTitle>Burn Tokens</CardTitle>
         </CardHeader>
@@ -156,11 +146,11 @@ export default function TokenInteraction() {
             placeholder="Amount to Burn (SIMP)"
             value={burnAmount}
             onChange={(e) => setBurnAmount(e.target.value)}
-            disabled={isLoading}
+            disabled={isLoading || !account}
           />
           <Button
             onClick={handleBurn}
-            disabled={isLoading}
+            disabled={isLoading || !account}
             className="w-full hover:cursor-pointer"
           >
             {isLoading ? "Processing..." : "Burn"}
