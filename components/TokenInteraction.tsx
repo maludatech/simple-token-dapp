@@ -56,7 +56,7 @@ export default function TokenInteraction() {
       toast.error("Please fill all fields and connect wallet");
       return;
     }
-    if (!toAddress.startsWith("0x")) {
+    if (!toAddress.startsWith("0x") || toAddress.length !== 42) {
       toast.error("Invalid recipient address");
       return;
     }
