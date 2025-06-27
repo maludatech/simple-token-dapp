@@ -33,12 +33,17 @@ export const getBalance = async (address: string): Promise<string> => {
 // Debug function to test raw contract call
 export const debugBalance = async (address: string) => {
   const publicClient = getPublicClient(config);
-  const result = await publicClient.call({
-    to: contractAddress,
-    data:
-      ethers.id("balanceOf(address)").slice(0, 10) +
-      ethers.zeroPadValue(address, 32),
-  });
-  console.log("Raw balanceOf call result:", result, "for address:", address);
-  return result;
+  try {
+    const result = await publicClient.call({
+      to: contractAddress,
+      data:
+        ethers.id("balanceOf(address)").slice(0, 10) +
+        ethers.zeroPadValue(address, 32),
+    });
+    console.log("Raw balanceOf call result:", result, "for address:", address);
+    return result;
+  } catch (error: any) {
+    console.error("debugBalance error:", error);
+    return null;
+  }
 };
