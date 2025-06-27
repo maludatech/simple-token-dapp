@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { toast } from "sonner";
-import { getContract, getBalance, getConnectedAccount } from "@/utils/ether";
+import { getContract, getBalance } from "@/utils/ether";
 import { useAccount } from "wagmi";
 
 export default function TokenInteraction() {
