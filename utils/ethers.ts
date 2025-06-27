@@ -13,7 +13,7 @@ export const getContract = async () => {
   return new ethers.Contract(contractAddress, ABI, signer);
 };
 
-export const getBalance = async (address: string): Promise<string> => {
+export const getBalance = async (address: `0x${string}`): Promise<string> => {
   const publicClient = getPublicClient(config);
   try {
     const balance = await publicClient.readContract({
@@ -31,7 +31,7 @@ export const getBalance = async (address: string): Promise<string> => {
 };
 
 // Debug function to test raw contract call
-export const debugBalance = async (address: string) => {
+export const debugBalance = async (address: `0x${string}`) => {
   const publicClient = getPublicClient(config);
   try {
     const result = await publicClient.call({

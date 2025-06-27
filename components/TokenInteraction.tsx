@@ -38,7 +38,7 @@ export default function TokenInteraction() {
         setBalance(balance);
         if (balance === "0") {
           toast.warning(
-            "No SIMP tokens found in your wallet. Transfer tokens to this address."
+            `No SIMP tokens found in your wallet (${account}). Transfer tokens to this address.`
           );
         }
       } catch (error: any) {
@@ -54,6 +54,10 @@ export default function TokenInteraction() {
   const handleTransfer = async () => {
     if (!account || !toAddress || !amount) {
       toast.error("Please fill all fields and connect wallet");
+      return;
+    }
+    if (!toAddress.startsWith("0x")) {
+      toast.error("Invalid recipient address");
       return;
     }
     if (chainId !== 11155111) {
