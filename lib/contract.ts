@@ -1,8 +1,6 @@
-import { Abi } from "viem";
-
 export const contractAddress = "0xff53a9bb7a2a537ae11fe41b44e2bcbfb9c79e75";
 
-export const ABI: Abi = [
+export const ABI = [
   {
     inputs: [
       { internalType: "uint256", name: "initialSupply", type: "uint256" },
@@ -147,4 +145,4 @@ export const ABI: Abi = [
     stateMutability: "nonpayable",
     type: "function",
   },
-];
+] as const;
